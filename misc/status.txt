@@ -1,0 +1,10 @@
+Petrichor Park
+
+I don't have Kali set up yet because Mike Tie hasn't sent out the emails. I have
+used it before years ago though.
+
+I'm doing this all on a clean Github account because I don't want people to be
+able to find out where I go to college from my normal Github account.
+
+By the way I've "fixed" the problems with accessing the course website by
+SSH'ing into Mirage and then using Lynx from there. Dear lord.
