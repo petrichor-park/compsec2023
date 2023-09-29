@@ -76,7 +76,6 @@ def decode_rsa(privkey, mod, msg):
         low = short & 0xff
         text += [high, low]
     return "".join(chr(x) for x in text)
-    
 
 
 if __name__ == "__main__":
@@ -90,4 +89,3 @@ if __name__ == "__main__":
     # Amazingly, it takes LONGER to decode the message than it does to crack Alice's key.
     # My guess is this because arbitrary-precision arithmetic is slow
     print(decode_rsa(privkey, 170171, ALICES_SUPER_SECRET_MESSAGE))
-

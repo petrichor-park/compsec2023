@@ -1,0 +1,105 @@
+I've put the public and private keys in their own files beside this one.
+
+=== Private Key ===
+
+Somehow in the packed binary of the private key, there should be:
+- the version, which I think MUST be 0 in this case
+- the modulus n
+- the power you raise the message to, to ENcode
+- the power you raise the message to, to DEcode
+- the two prime factors of n
+- a "CRT Coefficient," which I think is just there to save you a little bit of
+  math
+- Optionally, extra primes, but not in this case
+
+A lot of this information is redundant (like if you have just p, you can get
+the rest of the key), but I 'spose it's for convenience.
+
+It feels a little sus just plugging a private key into any old website, but
+this is a burner key, it's alright.
+
+So yes, using this I can tell
+- It's version 0
+- Two mystery numbers; Luchini's decoder says they're called
+  `privateKeyAlgorithm` and `privateKey`, which I can't find in the RFC. but I
+  think have something to do with Appendix A.1 (which describes a type of
+  delicious steak sauce).
+- (Actually no it looks like this is of type OneAsymmetricKey, thanks
+  TheDigitalCatOnline)
+- After that there are 6 integers, as required:
+  = modulus: the modulus all the calculations are done under.
+	Starts at byte 401.
+	0x03d63a9fd47844bbcc2d1643e1bf9c28a2374313090c20cd84725b9a6a8caecf4648b7
+	09bd2dc21237804c80eca1eb87c18bf000e088e0067445defa5cc131b7f089f85fc03970
+	354acf084fc80c1b6a2c1edb2f3fd8161d57abd2fad047198a7bdc0692fe6a107ff48a36
+	a2f00929432dae8a52af97682c6922c26b71bfacb6a1f9cb2e6efd501d8bc8a4a2e45214
+	28c75e22f7fd47c8e929b64c8fc435d46bb831a55b732bbd79af21e4b18686d6069e18e8
+	16e0f68c73ec9bb7df7b811ec3f16ad3053fdef73b5d2008635eeb74c6f42f427bb467dc
+	0c8de56dafa1acc6e72f09b76043690ed5f57e51f78e0413d3a78db0a9c268a9edeac6c2
+	cc204095f61f8f65f05c43f54c20fd0a63a80c003eac4da2ddb953b7b9a9deca10c42e2a
+	846579f65ebb22fc6c42fdcb6c75c5e8c755c72429c9b2eeb542132edcf009f6267b3763
+	5f40ad6fe549ac1b1b03f48e0b95977fd614f8efe2f02f9eb98fd98c713f27f26baae16a
+	4f3a77664da98926b360e42f6ca05297404b13e6096eec7431
+  = publicExponent: the public key, what you raise things to the power of to
+    encode them.
+	Starts at byte 789.
+	0x00c6ff012447ac3e7318aeb5b98e07769ddb5de308e6723fc915e1ca08e0629c43b99c
+	e11afb7676d45c6508873fedd69911c5cfa9963cf8f946720696d3db8877e74ec5f555f6
+	4fd1d798f2e28224842b1f686ff28072231a16eb562f09c66df7b254b9a6776f8afde0cf
+	b82b1b89e52a79e198825a5b076d5fea2fc860f940395889abb59249fe6a6b44c0477bfe
+	4cb36f69bbcfb06678c04aaa78ad6ed218de175228804e49bf24aac358756d58d7af1150
+	570aa327caba6398d421d41ba399
+  = privateExponent: the private key, what you raise things to the power of to
+    decode them. If this gets leaked people can read all your messages.
+	Starts at byte 985.
+	0x00e07c9c957ad4671a40822965d082bc198b918af63fe9acd9a2562da8f3002903643a
+	c8daa221fd989c3ae646ab672f074df325a4d1f69d363ff46b36eae895b46ecf96bb226d
+	65f8b13187006c5566d218fa62569c7d7a89ffdf5fcb117ba1cb8d99bd65c9a4f0886a88
+	6fcbf94133cccbb456d78f1fd94ae616ceb31a01c4e38e898e87b480af75e4ee90e6a910
+	1fdcd59493f68697a2cbc6086aa6dbbc125871537acf16f9a93ac5c620a3bb876f859f2c
+	4d4d5f3c41907e9c7c13ccb74ca3
+  = prime1: one prime factor of modulus.
+	Starts at byte 1181.
+	0x3037ca070876ec0ae7882df07041ceb4215b768fc987157d9c17c1e4b4ba303318deb2
+	8cdf31ad4977b9e37f223677314fe52694691b0d1919c0b768049dc54b8878c5eed48d82
+	79ce4bf94e794a6fdc23182348176790a9d9b3dc86395023854968ce334fed6f386528ef
+	ef4214ffba731dfede5716878e311785cc7ff2e564ffd71c0c3b0e42df766e8a48c7faae
+	8b2c0beabe407813fa441d5a706bd1ecc4a3d1fc8e5a69f42ee651bf3574f17a11a99855
+	fef5d9c67db3746cb265baecc1
+  = prime2: the other prime factor of modulus.
+	Starts at byte 1376.
+	0x37e18d3100a4830ddbe50add176c93da600dd8e3b7c1398feb833c56843713fe8e22bc
+	0100bf295ba5f85b7e5808958261fb16f1d27a6b6427c37634f380f653360a62e12e8ec1
+	05894664eecc08ee517a7a49a479cc1a86e3b4fd2995ae8af61ac79c880c0c0cfc4858b2
+	4bba3e6ae09e0cc459607d731fdbeaed85540200bb0cae5d5696ae39ff44ffc5fe453388
+	5af6a7c7b56487b6b4b7153d4750079f21790468dbc84259c8119762649fb7f520f42099
+	159b916a58c7cbb86f4d548bb5
+  = coefficient: (inverse of q) mod p, to save some processor cycles.
+	Starts at byte 1571.
+	0x4e0ef8bd46555ad71f2982b5aa12b25a647c7ba52f8c0696f0cf5cfe44abd662f0356e
+	16c30732907bf041a2a05de4f59e27b5f41f96203298cc1fd52856f481912bf5182bcf4f
+	fca6a73393b8d9d017cf588a542acd32d3ed07749744834ae634888d18b8c6a13f7cfce5
+	c3ea088f4925eb5f22a603975277202e421b46b17f0aca9ed45de58a0f8150d018236db0
+	030852b20d87af3018c69bdbeb4d41f6efb3864a4c61362496ca518623a1cbfe53c140d7
+	b7a59cbffcee856a86c6face4d
+
+=== Public Key ===
+
+The definitions for the public key are conveniently in RFC 8017 A.1.1.
+
+The first part indicates the type of encryption. The third part indicates whose
+key it is: my username at my computer. (Yes, I'm doing this from my laptop, not
+Kali...)
+
+The second part is the interesting part... because it's not strict DER.
+The blog post goes into more detail, but the gist is that these keys usually
+start with the same 18 bytes that tell you the algorithm is `ssh-rsa` 
+(redundant with the comment at the beginning of the file), and that the modulus
+is 65537.
+
+Then, there is `0x00000181`, which indicates there are 385 bytes of key modulus:
+
+... and I didn't have time to figure the rest of this out before classtime.
+And my p and q don't multiply correctly.
+
+I guess I should have minded my Ps and Qs better...
