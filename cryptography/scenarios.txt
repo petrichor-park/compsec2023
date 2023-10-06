@@ -1,0 +1,143 @@
+Petrichor Park
+(Whoops I've been forgetting to annotate my names)
+
+=== 1 ===
+
+Alice and Bob use Diffie-Hellman.
+They now both have a shared secret key K that Eve can't see.
+
+Alice encodes her message:
+	let M_enc = AES(K, M)
+And then she sends it over the wire.
+
+Eve reads M_enc but cannot decode it because she doesn't know K.
+
+Bob gets M_enc and reconstructs M with AES_D(K, M_enc).
+
+=== 2 ===
+
+Alice and Bob use Diffie-Hellman and come up with K.
+(If Mal is interfering: Alice and Bob each get some K1 and K2,
+and Mal gets K1 and K2)
+
+Alice hashes her message and encrypts the hash using Bob's public key:
+	let M_hash_enc = E(P_B, H(M))
+
+Alice encodes her message as in scenario 1:
+	let M_enc = AES(K, M)
+
+Alice sends M_hash_enc and M_enc over the wire.
+(If Mal is interfering, she can read the encoded message, which is allowed by
+the problem statement. But, she cannot edit the message because she cannot
+forge a hash of the encoded message. If she edits M and sends M'_enc, then its
+hash won't match what Bob expects, and she can't forge the hash.)
+
+Bob decodes the message with AES_D(K, M_enc).
+
+Bob decrypts the hash with E(S_B, M_hash_enc), and checks it against the message.
+If the message matches, Bob is confident Mal didn't mess with it.
+
+=== 3 ===
+
+(We talked about this in class on Friday.)
+
+Alice and Bob perform Diffie-Hellman and come up with K.
+
+Bob sends Alice a random number R.
+
+Alice first takes the value she sent off to Bob during DH, g^a%p. Then, she
+concatenates it with R and sends it "decrypted" using her private key.
+
+Once Bob gets that:
+- He can reconstruct R and g^a%p by "encoding" it using P_A (remember RSA's
+  encoding and decoding functions are commutative)
+- He knows that Alice sent that message
+- He knows Eve can't read the message because Eve doesn't have K (although she
+  might still read the encoded text)
+- He knows Mal can't read the messages even if she did DH with both of them
+  because Bob would be expecting g^m%p, with whatever number Mal made up while
+  pretending to be Alice.
+
+Now that Bob and Alice are certain no one can read their packets, Alice sends
+over AES(K, M || D(P_A, H(M))). Bob can use the hash at the other end to make
+sure that no one messed with the packets, and the fact that Alice "decrypted"
+it means she can prove it to the judge in problem 4. (Also, the hash is there
+to make sure the connection didn't have any noise. "I promise to pay BobCorp
+$100,000" could get corrupted to "I promise to pay BobCorp $900,000" with one
+bitflip.)
+
+It's important to keep in mind that this doesn't prove there *isn't* a Mal or
+Eve, it just proves they can't read the transactions or interfere without Alice
+and Bob finding out. (If you're willing to be a little bit pedantic your ISP is
+a Mal because they have to process and forward each packet.)
+
+=== 4 ===
+
+I guess the possibility space for things Alice *could* say is infinite.
+- My dog ate the contract
+- Space aliens
+- I was possessed by the spirit of Ronald Reagan
+- Bill Gates' 5G coronavirus vaccine chip activated and forced me to sign the
+  contract
+- Help I'm trapped in a homework factory and forced to do Petra's homework
+- fnord
+- The FitnessGram pacer test is a multistage aerobic exercise
+Etc.
+I can't say I'd particularly believe any of it, except maybe the second-to-
+last.
+
+It's not possible for this to happen without either Alice or Bob lying (or
+making a mistake). If they follow the protocol, they can't end up with different
+contracts because if it got corrupted or Mal'ed they would know.
+
+So, I'd ask Alice and Bob both to present their versions of (M || D(S_A, H(M))).
+- If they are the same, then Alice is found in contempt of court and told to
+  stop wasting my time.
+- If the hash I get from using P_A on *Bob's* version of the hash doesn't match
+  and Alice's does, then Bob is probably lying. Bob can't forge D(S_A, H(M))
+  without S_A, so he just gave the judge any old number. Nice try, Bob.
+- If both hashes check out (but the messages are different), then Alice is
+  probably lying. Again, Bob can't make D(S_A, H(M)), so if he has one that
+  works Alice must have made it at *some point*.
+- If Alice's hash doesn't check out then she probably made a mistake.
+- If neither hash matches then I break down crying on the judge's stand.
+
+=== 5 ===
+
+CA would use the same decrypt-with-the-privkey trick, and attach:
+
+	D(S_CA, "bob.com" || P_B || some other metadata like expiry time)
+
+Anyone can then run P_CA on this to get back Bob's public key. Because you need
+S_CA to create a string with that property, we know the CA says it checks out.
+
+(How Bob convinces CA that he has S_B is another problem and probably looks
+like the protocol in scenario 3. Although, when I was getting TLS on my
+website, I used LetsEncryptBot which I think generated the key for me on the
+fly... hopefully I trust them to not have recorded the key.)
+
+=== 6 ===
+
+No. Cert_B is public, otherwise it wouldn't work as a cert.
+
+> A certificate? Signed with bob.com? Signed with P_B? Signed with S_CA?
+  Localized entirely within your webserver?
+< Yes!
+> May I see it?
+< No!
+
+But we could go back to the old random number trick. Alice sends Bob R, and Bob
+sends back D(R, S_B). Alice can then run Bob's pubkey on that to see if she
+gets R; if she does, she knows Bob has S_B.
+
+=== 7 ===
+
+If Mal works for the government of Vulgaria, where CACorp has offices, she might
+be able to force CACorp to give up their private key. Then she can go sign a
+certificate that says the pubkey associated with bob.com is actually P_M, a key
+for which she has the S_M. (Thank goodness I live in the Land of the Free, where
+such a thing would never *ever* happen.)
+
+Mal could go to Bob's house and beat him up with a metal pipe until he gives
+her his private key. Or win it off of him in a game of cards. Or sneak into his
+house at night and steal his laptop. Etc, etc etc, etc.
