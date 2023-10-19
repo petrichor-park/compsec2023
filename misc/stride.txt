@@ -1,0 +1,71 @@
+[S]poofing 
+>> Pretending you're someone else.
+
+If you get someone else's username and password, of course, you can impersonate
+them. One counter is sending the client an email whenever some "suspicious
+login" occurs. (What counts as a "suspicious login?")
+
+If you get the credentials of the email they have set as their TU email, then
+you can request a password change and change their password to whatever you
+damn well please. At that point, that's no longer TU's problem, but TU should
+at least make it easy to migrate or close an account to help with damage
+control.
+
+[T]ampering
+>> Maliciously edit data, either over the wire or saved to disc
+
+Obviously you could just give TU fake information. "Hello, I am Jane Doe, who
+lives on 1234 Place Ave, and I happen to know there's a tapir located in the
+middle of the White House as we speak." I'm not sure there's a good prevention
+against this besides legal documents, and for a (checks notes) tapir-based
+social media site, I doubt it matters.
+
+Even if the normal usage of the web app only lets you send certain kinds of
+requests, you can always just send whatever kinds of requests you want. (This
+is an especially big problem with GraphQL databases. Storytime: there was this
+NFT scam called Hitpiece that resold artists' songs as NFTs. My friend got hit
+by this, and it took me about 30 minutes to find their GraphQL api url and
+learn enough GraphQL to get it to provide me with a list of every single artist
+they had scraped. I didn't even have to coerce the data afterwards!)
+
+I suppose XSS or HTML injection attacks would also fall under this category.
+"Hello, my username is `<script>allYourPasswords.hack()</script>`"
+
+[R]epudiation
+>> Have plausible deniability and leave no trace
+
+Of course, logging is a good counter against a lot of these things. If you
+notice that some IP is sending strange messages, you can use the logs to check
+if they've done it before.
+
+This can tie in with S also; for example, Duo tells you where in the world the
+sign-in request is coming from.
+
+[D]enial of service
+>> Make other people unable to use the service
+
+My favorite kind of DOS attack is the slow loris attack. Most DOSs require
+enormous amounts of devices all sending packets, because chances are the beefy
+server you're trying to disable is stronger than your little laptop. (Also,
+computers tend to be better at download than upload).
+
+A slow loris attack is when you open a TCP connection, send the start of a nice
+well-formed HTTP query, and then just start sending garbage in the user agent
+really, really slowly, like a couple bytes per second. The hope is that the
+server can't tell the difference between this and some poor real client with
+a lousy connection, and then it consumes all its worker threads or whatever
+corralling your queries. Because it takes so little processing power to send
+these queries, you can open millions of them!
+
+[E]levation of privilege
+>> Get into things you're not supposed to
+
+This is the big one. The most notable thing is that nothing stops me from just
+sending requests directly to the database server. What if I send `SELECT * FROM
+users;`? What if I send `DROP TABLE users;`?
+
+Obviously, DO NOT PUT RAW USER CONTENT INTO YOUR SQL QUERIES.
+
+There are a lot of really fascinating side-channel attacks on databases.
+This is one of my favorites.
+https://www.youtube.com/watch?v=za_9hrq-ZuA
