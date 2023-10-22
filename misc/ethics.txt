@@ -1,0 +1,77 @@
+Petrichor Park
+
+=== 1 ===
+
+Ok honestly at this point, Instatoonz has made their bed and now they're gonna
+have to lie in it.
+
+In real life, I probably would do nothing. It's the easiest solution, and
+doesn't get me in any trouble.
+
+Assuming I am going to report it, I would probably defer this to someone else
+first; I'd do a writeup or tech demo and send it to LiveOverflow or Deviant
+Ollam or someone. I would make sure this is ANONYMOUS so I don't get in trouble.
+Probably I'd want the /existence/ of the attack to be public knowledge, but
+keep the implementation details secret so other people can't do it.
+
+If I report it publically associated with my name then I'm in trouble either
+way, whether it's from the government or Instatoonz' legal department, so I
+don't think that the DMCA matters very much here. Even if discovering the bug
+was OK under DMCA, the lawyers would find /something/ I'm in violation of,
+or just sue me with little legal backing just to make my life hard. Lawyers
+are nasty like that. I guess my MO is to do a public service by protecting
+Instatoonz' customers. They should be able to make their own informed decision,
+but they need to be /informed/.
+
+Instatoonz has every legal right to be a dick and I would probably breaking the
+law, but I'd be contributing to society and human well-being...
+
+The situation changes if I'm a citizen of another country, because then I can
+pull a maia arson crimew* and just report it anyways because the American legal
+machine would have no power over me. We stay silly. (And that way, I can still
+make some money via Patreon or something. Look, I have to pay the bills, ok?)
+
+*The person who leaked the no-fly list.
+
+=== 2 ===
+
+Normally I shouldn't be allowed to work at a beer startup but I pulled a "well
+I'm actually 22 in Korean years" during the interview and they bought it.
+
+On the algorithm side, I think you can actually implement both of these without
+any identity tracking.
+
+The first feature can be implemented with a sliding window algorithm. Have
+seven counter variables in a database for each brewery, and a cursor for the
+"current day". Every time someone shows up to a brewery, increment the counter,
+and make a cron job that moves the cursor and wipes the new "current day." Then
+you can just sum all the counters to see how many people showed up in the
+previous week. (This does double-count people who went multiple times, but I
+think that's probably OK.)
+
+The second feature, I don't think I can make an algorithm off the top of my
+head but it strikes me that it's probably the same problem as privacy-
+preserving Covid-19 contact tracing:
+	https://www.youtube.com/watch?v=EgIg90cFRVw
+
+Anyways let's assume it is possible to implement all this while storing no PII.
+
+I really hate making decisions like this because I will agonize about it
+forever and also hate presenting controversial ideas.* I would probably just put
+forward my theories on how you could implement this with no PII storage and
+(depending how comfortable I felt in the workplace) bring into question how
+much money we would actually make from selling the location data and whether
+that would break our company values.
+
+... Although, my opinion of this is probably colored because the situation is
+a company. When asked for anonymized usage statistics for indie projects, I
+generally say yes, because I've been on the other side of it and know how
+valuable these anonymized statistics can be. (I have it on for Factorio,
+KDE Neon crashes, Minecraft Forge, ... and I'd kill to know where people get
+stuck when playing through my Minecraft mods, for example.)
+
+In short I don't know, and part of my goals in life are to tech up in a company
+and get paid plenty /without/ having to make decisions like this.
+
+*Yes I'm pretty rowdy in class, but I only say things that I know people will
+laugh along with or otherwise be OK with.
