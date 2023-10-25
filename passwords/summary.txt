@@ -1,0 +1,28 @@
+Interestingly it looks like old students are also in the passwd on mirage: I see
+`wormanm` and `stockwella`, who are alumni. I can't read shadow, though, which
+is probably good. I do wonder if this means, if I can get an "old" password out
+of an alumnus, if I can break into Mirage.
+
+Anyways.
+
+Run things with `cargo run --release -- ARGS`
+ARGS can be
+- part1
+- part2 {target-hash-count}
+
+=== Part 1 ===
+
+User time : 211ms
+Hashes computed : 267516
+Passwords cracked : 2734 (hell yeah)
+Time per hash : 0.78 microseconds
+Time per crack : 77 microseconds
+
+There's about 100 times more words than users, so it makes sense it would take
+about 1/100th of the time to do each hash vs each password.
+
+=== Part 2 ===
+
+I'm using Rayon for parallelism, which automatically splits up my processing
+across threads ... but this means I can't write to a file in real time.
+So, I'm going to just tell the computer to stop after it gets 50 passwords.
