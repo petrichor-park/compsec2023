@@ -3,26 +3,129 @@ Interestingly it looks like old students are also in the passwd on mirage: I see
 is probably good. I do wonder if this means, if I can get an "old" password out
 of an alumnus, if I can break into Mirage.
 
+A brief aside about multithreading: I wrote this in Rust so that I could use
+the Rayon library, which makes parallelizing algorithms really easy. Basically,
+I can tell Rayon what I want it to iterate over, and it ~* magically *~ figures
+out how many virtual threads and CPU cores and nice levels and work stealing and
+whatever to make it run as fast as possible.
+
+https://github.com/rayon-rs/rayon/tree/master
+
 Anyways.
 
 Run things with `cargo run --release -- ARGS`
 ARGS can be
 - part1
-- part2 {target-hash-count}
+- part2
+- part3
+It prints the passwords found to stdout; use shell redirection to get it to
+your favorite file.
 
 === Part 1 ===
 
-User time : 211ms
-Hashes computed : 267516
-Passwords cracked : 2734 (hell yeah)
-Time per hash : 0.78 microseconds
-Time per crack : 77 microseconds
+- User time : 191ms
+  This is the "total time" as displayed by my shell. All my impls are
+  multithreaded, and the "usr time" is time spent on the CPU ... because I have
+  multiple cores it will overcount, similar to how 8 people can work 8
+  man-hours in only 1 hour.
+- Hashes computed : 267,516
+- Passwords cracked : 2734 (hell yeah)
+- Time per hash : 713 ns
+- Time per crack : 70 µs
+- Hashes per crack : 98
 
 There's about 100 times more words than users, so it makes sense it would take
 about 1/100th of the time to do each hash vs each password.
 
+I'm recording it as hashes per crack, instead of cracks per hash, because I can
+reason with that number better.
+
 === Part 2 ===
 
-I'm using Rayon for parallelism, which automatically splits up my processing
-across threads ... but this means I can't write to a file in real time.
-So, I'm going to just tell the computer to stop after it gets 50 passwords.
+- Total time : 1hr30m30s (90.34 minutes)
+- Hashes computed : 71,564,810,256
+- Passwords : 2734 (yeaaaa)
+  cracked2.txt is actually 2755 lines long, but there are 2,734 unique lines 
+  in there (see `sort -u cracked2.txt | wc`). My guess is that my code is
+  double-producing some passwords. `sort cracked2.txt | uniqcd` prints all the
+  duplicate lines; the words here strike me as they could be produced in two
+  different ways. For example "upfoldslaughter" could be "upfolds laughter" or
+  "upfold slaughter."
+- Time per hash : 75 ns
+- Time per crack : 1.98 seconds
+- Hashes per crack : 26 million
+
+Surprised it only took an hour and a half! Wow!
+
+1.98 seconds per crack is a little misleading here because I have a hash table
+of all the users. If I was looking to crack a *single* password, it would take
+up to an hour and a half, depending how close to the start it was.
+
+=== Part 3 ===
+
+Even just a 32-bit salt value makes it suddenly intractable to check each with
+each word. (Part 2 turned the search space from 267k words to 72 billion. If
+I just checked every combo from 267k words and 2^32 salts, I would have to
+search about a trillion.)
+
+- Total time : 38.42 seconds
+- Hashes computed : 368,240,393
+- Passwords cracked : 2734 (yaya)
+- Time per hash : 104 ns
+- Time per crack : 14 ms
+- Hashes per crack : 135k
+
+My other algorithms iterate over every password in the search space and match
+it against the passwords, but the salts here mean I have to do it the other
+way. I iterate over every user, and try hashing every word with the salt until
+it works.
+
+I suppose this is still faster than part 2 because the search space for 3 is
+(number of words * number of users), and the search space for 2 is (number of
+words ^ 2).
+
+This wouldn't get any slower even if the salt was very very long, though, so I
+guess it goes to show that salts don't automagically make something secure.
+
+=== Analysis ===
+
+I'm recording the time per hash by just taking the total time divided by the
+number of hashes, which isn't really accurate because it's also tracking the
+time for all the other operations (looking up in hashmaps, iteration overhead,
+etc.) But that's the best I can do.
+
+Memory requirements for each part: in theory, there are infinitely many hashes
+that map to each password, because the space of passwords is infinite but the
+space of hashes is 256 bytes.
+
+But let's assume that this question means "store a hash->password pair for each
+password in the space." In this case, each pair requires (32 + 16 + 32) = 80
+bytes.
+
+- Part 1: Each password is just 1 of the 267516 words in the database.
+  At 80 bytes per mapping, that's 21.4 MB.
+  Very doable.
+- Part 2: Each password is a pair of the words, so there are:
+    (267516^2) = 71564810256
+  possible passwords. At 80 bytes per mapping that's 5.7 terabytes.
+  That is probably still within scope for some supercomputer somewhere, but my
+  laptop has about 150 times less ram than that.
+- Part 3: Each password is a word crossed with a 32-bit salt. So there are:
+    267516 * 4294967296 ~= 1,100,000,000,000,000
+  possible passwords. That's almost 100 petabytes. This is so astronomically
+  large I don't know if I can express it.
+
+Why do we store hashes and not passwords?
+- The server has to, at some point, know either the hash or the password in
+  order to authenticate the user. If it's reading it from a file, that means
+  the passwords would just exist somewhere on the server's hard drive.
+- This means a disgruntled employee could just read all the passwords.
+- Or the government could order the server impounded.
+- Ideally the server would never even store the password in memory; there exist
+  some really fascinating attacks to smuggle memory out of other processes on
+  the same server. But that would mean the client would have to send the hashed
+  and salted password themself ... and then a bad actor could read the hashes
+  file and just send the hash+salt to the server. This is probably solvable
+  with some kind of TLS-like challenge/response, but then that means you have
+  to authenticate with a public key. Which is totally doable! But probably
+  too complicated for the average user.
