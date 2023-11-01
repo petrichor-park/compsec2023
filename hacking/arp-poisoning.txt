@@ -1,0 +1,78 @@
+Petrichor Park
+
+=== Execution ===
+
+A. Kali's MAC (over eth0) is 00:0c:29:ed:e0:e0
+B. Kali's IP is 10.133.138.240
+C. Metasploitable's Mac (over eth0) is 00:0c:29:c6:c7:06
+D. Metasploitable.s IP is 172.16.239.129
+E.
+	Kernel IP routing table
+	Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+	default         10.133.128.254  0.0.0.0         UG        0 0          0 eth0
+	10.133.128.0    0.0.0.0         255.255.224.0   U         0 0          0 eth0
+F.
+	Address                  HWtype  HWaddress           Flags Mask            Iface
+	10.133.128.254           ether   b4:0c:25:e0:40:12   C                     eth0
+G.
+	Kernel IP routing table
+	Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+	172.16.239.0    *               255.255.224.0   U         0 0          0 eth0
+	default         172.16.239.2    0.0.0.0         UG        0 0          0 eth0
+H.
+	Address                  HWtype  HWaddress           Flags Mask            Iface
+	172.16.239.2             ether   00:50:56:FA:1C:48   C                     eth0
+I. Metasploitable's * gateway is 172.16.239/23, so anything where the first 23
+   bits match will go to the gateway; it looks like it'll be specifically
+   sending things to 172.16.239.2 by default.
+J. I get an HTTP response on Metasploitable and I can see the whole transaction
+   on Kali.
+K. It looks like quite a few addresses in 10.133.128.0/20 are being filled with
+   Kali's MAC.
+M. My guess is that it'll go "aha! Gateway time, gotta send this packet to the
+   gateway -- oh look at that, another helpful computer on the network says
+   the gateway is [Kali's MAC address]!" and send it there. Silly computer.
+N. Check.
+O. Yes, I got the HTTP response and I see Wireshark packets... but it doesn't
+   look like the ARP spoofing worked. The original SYN packet's Ethernet frame
+   is sending to b4:0c:etc which is not Kali's MAC.
+   Turning off the spoofing though, the MAC addresses quickly go back to being
+   all different...
+   I'm really not sure what's happening, because Metasploitable says that it
+   thinks the gateway is Kali, but Wireshark says that all the packets are
+   just being sent to the gateway...
+P. Whenever anyone on the network sends out an ARP message asking "What MAC is
+   associated with IP addr X?" Kali responds "Oh, it's me!" and sends out its
+   MAC.
+Q. It might be possible to check if a suspiciously large number of IP addresses
+   you query all point to the same MAC address... but I can imagine some
+   situations (like company intranet, or a VPN) where that is actually intended
+   behavior. (I do note that Wireshark prints some warning messages when it
+   detects that more than one IP address point with the same MAC.)
+   I suppose that it's just best to assume someone could be listening and
+   encrypt all your traffic.
+
+=== Synthesis ===
+
+A. Mal wants to trick Alice into sending traffic to her instead of Bob, and
+   then send the packets through to Bob to avoid him getting suspiscious. To
+   trick Alice, when Alice asks "hey, how do I send packets out to the rest of
+   the world?" Mal says "OH YOU GO HERE TO MY COMPUTER I PROMISE." (I'm not
+   sure why Alice listens to Mal and not the actual gateway, but my guess is
+   that Mal just sends more packets in the hope Alice finds hers' first.) Then
+   Alice's computer records "to send packets to the gateway, send them to
+   [Mal's MAC address]" instead of the real gateway's MAC address.
+B. She could probably *guess* that something's up if a suspiciously large
+   number of ARP packets are going over the network, or if she asks for a bunch
+   of random IPs and they all point to one MAC. But again I don't think there's
+   really a foolproof way to do this.
+C. Not just with the packets. All Bob sees is "someone from this network sent
+   me a packet."
+D. I don't think they could tell, still. All it does is make it so Mal can't do
+   anything with the packets they're sending. She can't read them, and if she
+   tries to modify them, then the recipient will know.
+
+I don't have a satisfying answer for how come ARP poisoning doesn't just
+immediately DoS the whole network. I suppose it's very easy to detect that it's
+happening, but it would probably be pretty hard to find the device that's doing
+the attack on a large network.
