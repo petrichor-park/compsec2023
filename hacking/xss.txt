@@ -1,0 +1,107 @@
+=== Cookies ===
+
+a. Right now there's just a `theme` cookie with value `default`.
+b. Setting the theme sets that cookie's value to `red` or `blue`. Sensible
+   enough.
+c. The request sends a `Cookie` header with `theme={the theme}`. The response
+   sends a `Set-Cookie: theme={new theme}` along with some metadata separated
+   by semicolons. It looks like my theme will only be saved until February
+   2024...
+d. Yep.
+e. In the `Cookie` header. (Although I'm not sure what happens if it has
+   multiple cookies it needs to be sent.)
+f. The dropdown box makes the browser send a request to `/fdf/?theme={color}`.
+   I suppose the server is configured to send a `Set-Cookie` header with the
+   necessary theme cookie when you do that, and then when you request the home
+   page it splices the theme color into the CSS somewhere.
+   Actually, it looks like it just echoes whatever you request for the theme,
+   so my theme is now `amogus` (which displays default).
+g. Well, it's my browser, so I could just use Stylus or some other CSS-changing
+   extension. I could also manually set the cookie and reload the page, because
+   the server doesn't know better. (Checked this, this works.)
+h. Intercept a request to the homepage and alter the `Cookie` header. (Checked,
+   and it does work.)
+i. I'm using Burp's integrated browser. I *think*
+   /home/petrak/.config/chromium/Cookies, but I'm not sure because it's not a
+   standard install -- is this the same location as my other chromium install?
+   (They're stored as an encrypted SQL database, says stackoverflow, so I doubt
+   I'm going to find out.)
+
+=== XSS ===
+
+a.
+- Moriarty posts a message with the body being some valid HTML code.
+- Another user requests that post; the server prepares the webpage with the
+  contents of the post in the webpage. (This is where the bug is; the server
+  SHOULD sanitize this.)
+- The browser, because it can't tell the difference between good HTML and evil
+  Moriarity HTML, obediently displays the HTML.
+
+Moriarty's second attack also posts a script tag, which the browser goes and
+executes. There are ways to selectively allow tags except script and other
+ones that let you do shady things; Cohost does this. But you have to be careful
+because there's lots of ways to execute code on the browser that don't involve
+the script tag. (For example, the img tag has an attribute that's "a string of
+JS code to run if the image can't be loaded.")
+
+b.
+I think the self-replicating post bomb I ran the other day counts as "more
+virulent."
+The final code of it was this. (Actually it was this unformatted.)
+```
+function payload() {
+	document.getElementById("title").value = "<scr" + "ipt>" 
+		+ payload.toString() + "; payload(); </scr" + "ipt>";
+	document.getElementById("post").value = "petra wuz here";
+	document.getElementsByTagName("form")[0].submit()
+};
+payload();
+```
+
+What this does is:
+- Find the post title box and put in it a script tag, the /source code of the
+  payload function/, invokes the function, and then a closing script tag. (I
+  wrote the tags with string concatenation because otherwise the browser
+  interprets the closing script tag in the string to be a real closing tag.
+  Writing `"</scr" + "ipt>"` prevents the magic string `</script>` from being
+  in there anywhere).
+- Put `petra wuz here` in the post contents because you shoud always sign your
+  work.
+- Finds the form in the DOM
+- And submits it.
+
+This is a cheater's quine. But it does work.
+
+c.
+JS can read the user's cookies, so I could have it perform an XMLHTTPRequest
+to my evil server with a body of the user's cookie.
+
+One of my favorite XSS attacks ever was on a popular modded Minecraft server
+host. There are quite a lot of services that will host a Minecraft server for
+you for a small fee because it's a pain in the ass to set one up manually. This
+particular host forgot to sanitize the Minecraft server logs, which got printed
+to some web interface. Chat is one of the things logged, so if you chat HTML,
+then it'll display on the web interface.
+
+I like this for two reasons. Firstly, the attack doesn't do anything unless
+someone is viewing the logs on their browser, so alongside this attack you have
+to do some social engineering to get the server admin to look at the logs.
+Secondly, if you just post the HTML in chat, then everyone knows it was you who
+did the attack because your name's attached, so to get repudiation you have to
+figure out how to use the stuff you have /in-game/ to somehow print arbitrary
+text to the log without having it attached to your player.
+
+d.
+Even if the browser doesn't have JS enabled, Moriarty can still make the
+website unuseable by doing something like posting `</html>`, which will
+make the rest of the page unreadable.
+
+It's the server's job to prevent this. There exist very good server-side
+HTML sanitization libraries: plug in possibly dangerous text, and it spits
+out the text with all the tags and stuff replaced with special characters the
+browser prints as `<` or `>` but won't think is part of a script tag.
+
+Although it's apparently more secure to have it be a client-side library,
+because every browser is different. (Maybe I work on some strange browser
+where it interprets `{{{` as an opening HTML tag. It would be completely out
+of spec but it would still execute stuff.)
